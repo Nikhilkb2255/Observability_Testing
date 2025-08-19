@@ -1,0 +1,11 @@
+# Config files
+config.json
+.env
+settings.ini
+
+# Logs
+*.log
+
+# Temporary files
+__pycache__/
+node_modules/
