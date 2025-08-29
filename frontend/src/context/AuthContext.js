@@ -46,11 +46,27 @@ export function AuthProvider({ children }) {
     localStorage.setItem('role', role);
   };
 
-  const logout = () => {
-    setToken(null);
-    setRole(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
+  const logout = async () => {
+    try {
+      // Call backend logout endpoint if token exists
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+    } finally {
+      // Always clear local state regardless of API call success
+      setToken(null);
+      setRole(null);
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+    }
   };
 
   const clearAuth = () => {

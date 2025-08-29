@@ -195,13 +195,15 @@ const resolvers = {
       
         if (!user) {
           loginAttempts.labels('failed', username).inc();
-          logWarn('Login attempt with non-existent username', { username });
+          // Single log entry for failed login attempt
+          logWarn('Login attempt failed - username not found', { username, reason: 'username_not_found' });
           throw new Error('Invalid credentials');
         }
 
         if (password !== user.password) {
           loginAttempts.labels('failed', username).inc();
-          logWarn('Login attempt with wrong password', { username });
+          // Single log entry for failed login attempt
+          logWarn('Login attempt failed - wrong password', { username, reason: 'wrong_password' });
           throw new Error('Invalid credentials');
         }
       
@@ -214,7 +216,10 @@ const resolvers = {
         span.end();
         return token;
       } catch (error) {
-        logError('Error during login', error, { username });
+        // Only log if it's not a validation error (which we already logged above)
+        if (error.message !== 'Invalid credentials') {
+          logError('Unexpected error during login', error, { username });
+        }
         span.end();
         throw error;
       }

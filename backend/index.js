@@ -4,7 +4,8 @@ const { expressMiddleware } = require('@apollo/server/express4');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
-const morgan = require('morgan');
+// Removed morgan import since it's no longer used
+// const morgan = require('morgan');
 
 // Import observability modules
 const { register, httpRequestDuration, httpRequestTotal, activeConnections, loginAttempts, graphqlQueries } = require('./metrics');
@@ -14,6 +15,7 @@ const { createSpan, addSpanEvent, setSpanAttributes } = require('./tracing');
 const connectDB = require('./db/mongoClient');
 const typeDefs = require('./graphql/schema');
 const resolvers = require('./graphql/resolvers');
+const authRoutes = require('./routes/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
 const PORT = process.env.PORT || 5002;
@@ -27,11 +29,12 @@ async function startServer() {
     fs.mkdirSync('./logs');
   }
 
-  app.use(morgan('combined', {
-    stream: {
-      write: (message) => logInfo('HTTP Request', { message: message.trim() })
-    }
-  }));
+  // Removed Morgan middleware to reduce console noise
+  // app.use(morgan('combined', {
+  //   stream: {
+  //     write: (message) => logInfo('HTTP Request', { message: message.trim() })
+  //   }
+  // }));
   
   app.use(cors());
   app.use(bodyParser.json());
@@ -76,14 +79,14 @@ async function startServer() {
 
       span.end();
 
-      // Log request
-      logInfo('HTTP Request Completed', {
-        method: req.method,
-        url: req.url,
-        statusCode: res.statusCode,
-        duration: duration,
-        userAgent: req.get('User-Agent')
-      });
+      // Log request - commented out to reduce console noise
+      // logInfo('HTTP Request Completed', {
+      //   method: req.method,
+      //   url: req.url,
+      //   statusCode: res.statusCode,
+      //   duration: duration,
+      //   userAgent: req.get('User-Agent')
+      // });
     });
 
     next();
@@ -98,6 +101,9 @@ async function startServer() {
     logError('Failed to connect to MongoDB', error);
     process.exit(1);
   }
+
+  // Mount auth routes
+  app.use('/api/auth', authRoutes);
 
   // Create Apollo Server
   const server = new ApolloServer({ 
@@ -115,14 +121,14 @@ async function startServer() {
                 .labels(request.operationName || 'anonymous', response.errors ? 'error' : 'success')
                 .inc();
 
-              // Log GraphQL queries
-              logInfo('GraphQL Query', {
-                operationName: request.operationName,
-                query: request.query,
-                variables: request.variables,
-                hasErrors: !!response.errors,
-                errorCount: response.errors?.length || 0
-              });
+              // Log GraphQL queries - commented out to reduce console noise
+              // logInfo('GraphQL Query', {
+              //   operationName: request.operationName,
+              //   query: request.query,
+              //   variables: request.variables,
+              //   hasErrors: !!response.errors,
+              //   errorCount: response.errors?.length || 0
+              // });
             }
           };
         }
@@ -145,9 +151,9 @@ async function startServer() {
         if (token) {
           try {
             user = jwt.verify(token, JWT_SECRET);
-            logInfo('User authenticated', { username: user.username, role: user.role });
+            // logInfo('User authenticated', { username: user.username, role: user.role });
           } catch (err) {
-            logWarn('Invalid token provided', { token: token.substring(0, 10) + '...' });
+            // logWarn('Invalid token provided', { token: token.substring(0, 10) + '...' });
           }
         }
         

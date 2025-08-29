@@ -1,0 +1,245 @@
+{
+  "dashboards": [
+    {
+      "name": "APM Dashboard",
+      "description": "Application Performance Monitoring",
+      "panels": [
+        {
+          "title": "Request Success Rate",
+          "type": "stat",
+          "query": "rate(http_requests_total{status_code=\"200\"}[5m])",
+          "unit": "reqps",
+          "thresholds": {"green": 0.95, "yellow": 0.90, "red": 0}
+        },
+        {
+          "title": "Response Time Percentiles",
+          "type": "timeseries",
+          "queries": [
+            "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+            "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))"
+          ],
+          "legends": ["50th", "95th", "99th Percentile"]
+        },
+        {
+          "title": "Login Success Rate",
+          "type": "stat",
+          "query": "rate(login_attempts_total{status=\"success\"}[5m])",
+          "unit": "logins/sec"
+        },
+        {
+          "title": "Error Rate by Status Code",
+          "type": "timeseries",
+          "query": "rate(http_requests_total{status_code=~\"4..|5..\"}[5m])",
+          "legend": "{{status_code}}"
+        }
+      ]
+    },
+    {
+      "name": "Metrics Dashboard",
+      "description": "System and Application Metrics",
+      "panels": [
+        {
+          "title": "System Resource Usage",
+          "type": "timeseries",
+          "queries": [
+            "process_cpu_seconds_total",
+            "process_resident_memory_bytes / 1024 / 1024",
+            "nodejs_heap_size_total_bytes / 1024 / 1024"
+          ],
+          "legends": ["CPU", "Memory (MB)", "Heap (MB)"]
+        },
+        {
+          "title": "Request Rate",
+          "type": "stat",
+          "query": "rate(http_requests_total[5m])",
+          "unit": "reqps"
+        },
+        {
+          "title": "GraphQL Query Rate",
+          "type": "stat",
+          "query": "rate(graphql_queries_total[5m])",
+          "unit": "queries/sec"
+        }
+      ]
+    },
+    {
+      "name": "Logs Dashboard",
+      "description": "Centralized Log Analysis",
+      "panels": [
+        {
+          "title": "Log Volume Over Time",
+          "type": "timeseries",
+          "query": "rate({job=\"backend\"}[5m])",
+          "legend": "Backend Logs"
+        },
+        {
+          "title": "Error Logs",
+          "type": "logs",
+          "query": "{job=\"backend\"} |= \"error\"",
+          "maxLines": 20
+        },
+        {
+          "title": "Authentication Events",
+          "type": "logs",
+          "query": "{job=\"backend\"} |= \"login\"",
+          "maxLines": 15
+        }
+      ]
+    },
+    {
+      "name": "Traces Dashboard",
+      "description": "Distributed Tracing Analysis",
+      "panels": [
+        {
+          "title": "Total Spans Generated",
+          "type": "stat",
+          "query": "rate(jaeger_spans_total[5m])",
+          "unit": "spans/sec"
+        },
+        {
+          "title": "Trace Duration (95th Percentile)",
+          "type": "timeseries",
+          "query": "histogram_quantile(0.95, rate(jaeger_span_duration_seconds_bucket[5m]))",
+          "unit": "seconds"
+        },
+        {
+          "title": "Failed Traces",
+          "type": "logs",
+          "query": "{job=\"jaeger\"} |= \"error\"",
+          "maxLines": 15
+        }
+      ]
+    },
+    {
+      "name": "Alerts Dashboard",
+      "description": "Alert Management and Response",
+      "panels": [
+        {
+          "title": "Active Alerts",
+          "type": "stat",
+          "query": "alertmanager_alerts{state=\"firing\"}",
+          "thresholds": {"green": 0, "yellow": 3, "red": 10}
+        },
+        {
+          "title": "Alert Notification Latency",
+          "type": "timeseries",
+          "query": "rate(alertmanager_notification_latency_seconds[5m])",
+          "unit": "seconds"
+        },
+        {
+          "title": "Alert Accuracy Rate",
+          "type": "stat",
+          "query": "rate(alertmanager_alerts{state=\"firing\"}[5m]) / rate(alertmanager_alerts[5m]) * 100",
+          "unit": "percent"
+        }
+      ]
+    },
+    {
+      "name": "Infrastructure Dashboard",
+      "description": "Infrastructure Health Monitoring",
+      "panels": [
+        {
+          "title": "Backend Service Health",
+          "type": "stat",
+          "query": "up{job=\"backend-api\"}",
+          "thresholds": {"green": 1, "red": 0}
+        },
+        {
+          "title": "Prometheus Targets Up",
+          "type": "stat",
+          "query": "up",
+          "thresholds": {"green": 0.9, "yellow": 0.8, "red": 0}
+        },
+        {
+          "title": "Network Traffic",
+          "type": "timeseries",
+          "query": "rate(node_network_receive_bytes_total[5m])",
+          "legend": "{{device}}"
+        }
+      ]
+    },
+    {
+      "name": "Coverage Dashboard",
+      "description": "Observability Stack Coverage",
+      "panels": [
+        {
+          "title": "Services Instrumented",
+          "type": "stat",
+          "query": "count(up{job=~\".*\"}) / count(up{job=~\".*\"}) * 100",
+          "unit": "percent",
+          "thresholds": {"green": 0.95, "yellow": 0.8, "red": 0}
+        },
+        {
+          "title": "Log Sources Active",
+          "type": "stat",
+          "query": "count({job=~\".*\"})",
+          "thresholds": {"green": 3, "yellow": 2, "red": 1}
+        },
+        {
+          "title": "Trace Coverage Rate",
+          "type": "stat",
+          "query": "rate(jaeger_spans_total[5m])",
+          "unit": "spans/sec"
+        }
+      ]
+    },
+    {
+      "name": "Performance Dashboard",
+      "description": "Performance Testing and Benchmarking",
+      "panels": [
+        {
+          "title": "Request Rate Under Load",
+          "type": "timeseries",
+          "query": "rate(http_requests_total[1m])",
+          "legend": "{{method}} {{route}}"
+        },
+        {
+          "title": "95th Percentile Response Time",
+          "type": "stat",
+          "query": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+          "unit": "seconds",
+          "thresholds": {"green": 0.5, "yellow": 1.0, "red": 2.0}
+        },
+        {
+          "title": "CPU Utilization Under Load",
+          "type": "timeseries",
+          "query": "process_cpu_seconds_total",
+          "unit": "percent"
+        },
+        {
+          "title": "Memory Usage Trend",
+          "type": "timeseries",
+          "query": "process_resident_memory_bytes / 1024 / 1024",
+          "unit": "MB"
+        }
+      ]
+    }
+  ],
+  "alerts": [
+    {
+      "name": "High Response Time",
+      "condition": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1",
+      "duration": "2m",
+      "severity": "warning"
+    },
+    {
+      "name": "High Error Rate",
+      "condition": "rate(http_requests_total{status_code=~\"4..|5..\"}[5m]) > 0.05",
+      "duration": "1m",
+      "severity": "critical"
+    },
+    {
+      "name": "Service Down",
+      "condition": "up{job=\"backend-api\"} == 0",
+      "duration": "30s",
+      "severity": "critical"
+    },
+    {
+      "name": "High Memory Usage",
+      "condition": "process_resident_memory_bytes / 1024 / 1024 > 200",
+      "duration": "5m",
+      "severity": "warning"
+    }
+  ]
+}

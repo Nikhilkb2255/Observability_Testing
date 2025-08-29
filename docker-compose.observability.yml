@@ -40,14 +40,14 @@ services:
 
   # Loki for log aggregation
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:2.9.0
     container_name: loki
     ports:
-      - "3101:3100"
+      - "3100:3100"
     volumes:
-      - ./observability/loki/loki-config.yml:/etc/loki/local-config.yaml
+      - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml
       - loki_data:/loki
-    command: -config.file=/etc/loki/local-config.yaml
+    command: ["-config.file=/etc/loki/loki-config.yml"]
     restart: unless-stopped
 
   # Promtail for log collection
@@ -56,8 +56,9 @@ services:
     container_name: promtail
     volumes:
       - ./observability/promtail/promtail-config.yml:/etc/promtail/config.yml
-      - /var/log:/var/log
-    command: -config.file=/etc/promtail/config.yml
+      - ./backend/logs:/app/backend/logs
+      - ./frontend/logs:/app/frontend/logs
+    command: ["-config.file=/etc/promtail/config.yml"]
     restart: unless-stopped
     depends_on:
       - loki
